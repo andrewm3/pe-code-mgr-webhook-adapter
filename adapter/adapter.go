@@ -61,7 +61,7 @@ func EventHandler(w http.ResponseWriter, r *http.Request, config HandlerConfig) 
 	}
 
 	for _, x := range config.Whitelist {
-		if event.Ref == x {
+		if event.Ref == fmt.Sprintf("refs/head/%s", x) {
 			allowed = true
 			break
 		}
