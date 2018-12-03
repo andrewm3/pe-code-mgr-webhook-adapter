@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -43,15 +44,8 @@ func EventHandler(w http.ResponseWriter, r *http.Request, config HandlerConfig) 
 		return
 	}
 
-	// Copy the original request so it can be replayed
-	replayed := *r
-	replayed.RequestURI = ""
-	replayed.URL = u
-
-	// Artificially duplicate the reader stream in Body
-	body, _ := ioutil.ReadAll(r.Body)
-	r.Body = ioutil.NopCloser(bytes.NewReader(body))
-	replayed.Body = ioutil.NopCloser(bytes.NewReader(body))
+	replay := CreateReplay(r)
+	replay.URL = u
 
 	event, err := ParseEvent(r)
 
@@ -69,7 +63,7 @@ func EventHandler(w http.ResponseWriter, r *http.Request, config HandlerConfig) 
 
 	if allowed {
 		var netClient = &http.Client{Timeout: time.Second * 10}
-		_, err = netClient.Do(&replayed)
+		_, err = netClient.Do(&replay)
 		if err != nil {
 			http.Error(w, "Error replaying request", 400)
 			return
@@ -78,6 +72,21 @@ func EventHandler(w http.ResponseWriter, r *http.Request, config HandlerConfig) 
 	} else {
 		fmt.Printf("Push to '%s' ignored\n", event.Ref)
 	}
+}
+
+// CreateReplay duplicates a request allowing it to be replayed
+func CreateReplay(r *http.Request) http.Request {
+	// Copy the original request so it can be replayed
+	replay := *r
+	replay.RequestURI = ""
+
+	// Artificially duplicate the reader stream in Body
+	var buf bytes.Buffer
+	tee := io.TeeReader(r.Body, &buf)
+	r.Body = ioutil.NopCloser(tee)
+	replay.Body = ioutil.NopCloser(&buf)
+
+	return replay
 }
 
 // ParseEvent takes a request and parses it into an Event
