@@ -1,5 +1,7 @@
-IMAGE   ?= pe-code-mgr-webhook-adapter
-VERSION := $(shell git describe --always --dirty)
+BIN      := pe-code-mgr-webhook-adapter
+VERSION  := $(shell git describe --always --dirty --tags)
+REGISTRY ?= andrewm3
+IMAGE    := $(REGISTRY)/$(BIN)
 
 all: test build
 
@@ -8,5 +10,8 @@ test:
 
 build:
 	docker build -t $(IMAGE):$(VERSION) .
+
+push:
+	docker push $(IMAGE):$(VERSION)
 
 .PHONY: test build
