@@ -11,14 +11,14 @@ import (
 )
 
 var port int
-var redirect string
+var codeMgrURL string
 var whitelist string
 
 func init() {
 	flag.IntVar(&port, "port", 8080, "The port to serve on")
 	flag.StringVar(
-		&redirect,
-		"redirect",
+		&codeMgrURL,
+		"code_mgr_url",
 		"https://localhost:8170/code-manager/v1/webhook",
 		"The URL for Code Manager, which requests will be forwarded to",
 	)
@@ -28,8 +28,8 @@ func init() {
 func main() {
 	flag.Parse()
 	config := adapter.HandlerConfig{
-		Redirect:  redirect,
-		Whitelist: strings.Split(whitelist, ","),
+		CodeMgrURL: codeMgrURL,
+		Whitelist:  strings.Split(whitelist, ","),
 	}
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		adapter.EventHandler(w, r, config)

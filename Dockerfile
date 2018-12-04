@@ -23,7 +23,7 @@ COPY --from=build /go/src/github.com/andrewm3/pe-code-mgr-webhook-adapter/app .
 ENV CODE_MGR_URL https://localhost:8170/code-manager/v1/webhook
 
 # Run the pe-code-mgr-webhook-adapter command by default when the container starts.
-ENTRYPOINT ./app --redirect "${CODE_MGR_URL}"
+ENTRYPOINT ./app --code_mgr_url "${CODE_MGR_URL}"
 
 # Document that the service listens on port 8080.
 EXPOSE 8080
