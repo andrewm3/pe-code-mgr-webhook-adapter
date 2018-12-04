@@ -22,11 +22,6 @@ type Event struct {
 	Ref string
 }
 
-// GithubEvent holds the fields unmarshaled from a Github webhook payload
-type GithubEvent struct {
-	Ref string
-}
-
 // EventHandler handles all requests
 func EventHandler(w http.ResponseWriter, r *http.Request, config HandlerConfig) {
 	var allowed bool
@@ -93,18 +88,18 @@ func CreateReplay(r *http.Request) http.Request {
 func ParseEvent(r *http.Request) (Event, error) {
 	eventType := r.URL.Query().Get("type")
 	switch eventType {
-	case "github":
-		return ParseGithubEvent(r)
+	case "github", "gitlab":
+		return ParseGenericEvent(r)
 	}
 	return Event{}, fmt.Errorf("Unsupported type '%s' provided", eventType)
 }
 
-// ParseGithubEvent parses a request in the expected format from Github
-func ParseGithubEvent(r *http.Request) (Event, error) {
-	var event GithubEvent
+// ParseGenericEvent parses a request in the 'default' format
+func ParseGenericEvent(r *http.Request) (Event, error) {
+	var event Event
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		return Event{}, err
 	}
-	return Event{event.Ref}, nil
+	return event, nil
 }
