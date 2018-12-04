@@ -13,8 +13,8 @@ import (
 
 // HandlerConfig holds all the required config for the EventHandler
 type HandlerConfig struct {
-	Redirect  string
-	Whitelist []string
+	CodeMgrURL string
+	Whitelist  []string
 }
 
 // Event is a agnostic representation of the important fields delivered by the webhook
@@ -37,7 +37,7 @@ func EventHandler(w http.ResponseWriter, r *http.Request, config HandlerConfig) 
 		return
 	}
 
-	endpoint := fmt.Sprintf("%s%s", config.Redirect, r.URL)
+	endpoint := fmt.Sprintf("%s%s", config.CodeMgrURL, r.URL)
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Provided URL '%s' cannot be parsed", endpoint), 400)
