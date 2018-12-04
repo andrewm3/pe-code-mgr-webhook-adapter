@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -40,24 +41,36 @@ func BenchmarkCreateReplay(b *testing.B) {
 	}
 }
 
-func TestParseGithubEvent(t *testing.T) {
-	file, err := os.Open("../test/github.json")
-	if err != nil {
-		t.Fatal(err)
+func TestParseEvent(t *testing.T) {
+	var tests = []struct {
+		file     string
+		postType string
+		expected string
+	}{
+		{"../test/github.json", "github", "refs/tags/simple-tag"},
+		{"../test/gitlab.json", "gitlab", "refs/heads/production"},
 	}
 
-	req, err := http.NewRequest("POST", "", file)
-	if err != nil {
-		t.Fatal(err)
-	}
+	for _, test := range tests {
+		file, err := os.Open(test.file)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	expected := Event{"refs/tags/simple-tag"}
-	actual, err := ParseGithubEvent(req)
-	if err != nil {
-		t.Fatal(err)
-	}
+		endpoint := fmt.Sprintf("https://localhost:8170/code-manager/v1/webhook/?type=%s", test.postType)
+		req, err := http.NewRequest("POST", endpoint, file)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if actual != expected {
-		t.Errorf("ParseGithubEvent returned unexpected value: got %v want %v", actual, expected)
+		expected := Event{test.expected}
+		actual, err := ParseEvent(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if actual != expected {
+			t.Errorf("ParseEvent returned unexpected value: got %v want %v", actual, expected)
+		}
 	}
 }
